@@ -168,11 +168,15 @@ export class TypeCheckerPlugin extends Plugin {
 			// Our view could not be found in the workspace, create a new leaf
 			// in the right sidebar for it
 			leaf = workspace.getRightLeaf(false);
-			await leaf.setViewState({ type: TYPE_CHECKER_VIEW_TYPE, active: true });
+			if (leaf) {
+				await leaf.setViewState({ type: TYPE_CHECKER_VIEW_TYPE, active: true });
+			}
 		}
 
 		// "Reveal" the leaf in case it is in a collapsed sidebar
-		workspace.revealLeaf(leaf);
+		if (leaf) {
+			workspace.revealLeaf(leaf);
+		}
 	}
 
 	async validateFile(file: TFile): Promise<ValidationError[]> {

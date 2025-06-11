@@ -48,11 +48,13 @@ export class TypeCheckerView extends ItemView {
 	private renderResults() {
 		const container = this.containerEl.children[1];
 		// Clear existing content except header
-		const existing = container.querySelector('.type-checker-content');
+		const existing = container.querySelector(".type-checker-content");
 		if (existing) existing.remove();
 
-		const contentEl = container.createEl("div", { cls: "type-checker-content" });
-		contentEl.style.padding = "16px";
+		const contentEl = container.createEl("div", {
+			cls: "type-checker-content",
+		});
+		contentEl.style.padding = "6px";
 		contentEl.style.height = "100%";
 		contentEl.style.overflowY = "auto";
 
@@ -61,113 +63,130 @@ export class TypeCheckerView extends ItemView {
 			emptyState.style.textAlign = "center";
 			emptyState.style.color = "var(--text-muted)";
 			emptyState.style.marginTop = "2rem";
-			
-			emptyState.createEl("div", { text: "🛡️", cls: "type-checker-icon" });
+
+			emptyState.createEl("div", {
+				text: "🛡️",
+				cls: "type-checker-icon",
+			});
 			emptyState.createEl("h3", { text: "No type errors found" });
-			emptyState.createEl("p", { text: "Run 'Check all files' to scan your vault for frontmatter type issues." });
-			
-			const checkButton = emptyState.createEl("button", { text: "Check All Files" });
+			emptyState.createEl("p", {
+				text: "Run 'Check all files' to scan your vault for frontmatter type issues.",
+			});
+
+			const checkButton = emptyState.createEl("button", {
+				text: "Check All Files",
+			});
 			checkButton.classList.add("mod-cta");
-			checkButton.addEventListener("click", () => this.plugin.checkAllFiles());
-			
+			checkButton.addEventListener("click", () =>
+				this.plugin.checkAllFiles()
+			);
+
 			return;
 		}
 
 		// Summary
-		const totalErrors = this.results.reduce((sum, result) => sum + result.errors.length, 0);
+		const totalErrors = this.results.reduce(
+			(sum, result) => sum + result.errors.length,
+			0
+		);
 		const summary = contentEl.createEl("div");
-		summary.style.marginBottom = "1rem";
-		summary.style.padding = "12px";
+		summary.style.marginBottom = "8px";
+		summary.style.padding = "6px 8px";
 		summary.style.backgroundColor = "var(--background-modifier-error)";
-		summary.style.borderRadius = "6px";
-		summary.style.border = "1px solid var(--background-modifier-border)";
-		
-		const summaryTitle = summary.createEl("h3", { text: `${totalErrors} Type Errors Found` });
-		summaryTitle.style.margin = "0 0 4px 0";
-		summaryTitle.style.color = "var(--text-error)";
-		
-		const summaryDesc = summary.createEl("p", { text: `Found in ${this.results.length} files` });
-		summaryDesc.style.margin = "0";
-		summaryDesc.style.color = "var(--text-muted)";
-		summaryDesc.style.fontSize = "var(--font-ui-small)";
+		summary.style.borderRadius = "4px";
+		summary.style.fontSize = "var(--font-ui-small)";
+		summary.style.color = "var(--text-error)";
+		summary.style.fontWeight = "600";
+		summary.textContent = `${totalErrors} errors in ${this.results.length} files`;
 
-		// Results
-		this.results.forEach((result) => {
-			const fileSection = contentEl.createEl("div");
-			fileSection.style.marginBottom = "1rem";
-			fileSection.style.border = "1px solid var(--background-modifier-border)";
-			fileSection.style.borderRadius = "6px";
-			fileSection.style.overflow = "hidden";
-			
-			// File header
-			const fileHeader = fileSection.createEl("div");
-			fileHeader.style.padding = "12px 16px";
-			fileHeader.style.backgroundColor = "var(--background-modifier-hover)";
-			fileHeader.style.display = "flex";
-			fileHeader.style.justifyContent = "space-between";
-			fileHeader.style.alignItems = "center";
-			fileHeader.style.cursor = "pointer";
-			
-			const fileName = fileHeader.createEl("span", { text: result.file.path });
-			fileName.style.fontWeight = "600";
-			fileName.style.fontFamily = "var(--font-monospace)";
-			fileName.style.fontSize = "var(--font-ui-small)";
-			
-			const errorCount = fileHeader.createEl("span", { text: `${result.errors.length} error${result.errors.length > 1 ? 's' : ''}` });
-			errorCount.style.backgroundColor = "var(--text-error)";
-			errorCount.style.color = "white";
-			errorCount.style.padding = "2px 8px";
-			errorCount.style.borderRadius = "12px";
-			errorCount.style.fontSize = "var(--font-ui-smaller)";
-			errorCount.style.fontWeight = "500";
+		// Table
+		const table = contentEl.createEl("table");
+		table.style.width = "100%";
+		table.style.borderCollapse = "collapse";
+		table.style.fontSize = "var(--font-ui-small)";
+
+		// Table header
+		const thead = table.createEl("thead");
+		const headerRow = thead.createEl("tr");
+		headerRow.style.backgroundColor = "var(--background-modifier-hover)";
+		headerRow.style.borderBottom =
+			"1px solid var(--background-modifier-border)";
+
+		const fileHeader = headerRow.createEl("th", { text: "File" });
+		fileHeader.style.padding = "4px 6px";
+		fileHeader.style.textAlign = "left";
+		fileHeader.style.fontWeight = "400";
+
+		const errorsHeader = headerRow.createEl("th", { text: "Issues" });
+		errorsHeader.style.padding = "4px 6px";
+		errorsHeader.style.textAlign = "center";
+		errorsHeader.style.fontWeight = "400";
+		errorsHeader.style.width = "60px";
+
+		// Table body
+		const tbody = table.createEl("tbody");
+		this.results.forEach((result, index) => {
+			const row = tbody.createEl("tr");
+			row.style.borderBottom =
+				"1px solid var(--background-modifier-border)";
+			row.style.cursor = "pointer";
+			if (index % 2 === 1) {
+				row.style.backgroundColor =
+					"var(--background-modifier-hover-alpha)";
+			}
+
+			// File name cell
+			const fileCell = row.createEl("td");
+			fileCell.style.padding = "4px 6px";
+			fileCell.style.fontFamily = "var(--font-interface)";
+			fileCell.style.fontSize = "var(--font-ui-smaller)";
+			fileCell.style.maxWidth = "0";
+			fileCell.style.overflow = "hidden";
+			fileCell.style.textOverflow = "ellipsis";
+			fileCell.style.whiteSpace = "nowrap";
+			fileCell.textContent = result.file.basename;
+			fileCell.title = result.file.path;
+
+			// Error count cell
+			const errorCell = row.createEl("td");
+			errorCell.style.padding = "4px 6px";
+			errorCell.style.textAlign = "center";
+			errorCell.style.fontWeight = "300";
+			errorCell.style.fontFamily = "var(--font-interface)";
+			errorCell.style.fontSize = "var(--font-smaller)";
+			errorCell.style.color = "var(--text-error)";
+			errorCell.style.textAlign = "right";
+			errorCell.textContent = result.errors.length.toString();
 
 			// Click to open file
-			fileHeader.addEventListener("click", () => {
+			row.addEventListener("click", () => {
 				this.app.workspace.openLinkText(result.file.path, "");
 			});
 
-			// Errors list
-			const errorsList = fileSection.createEl("div");
-			errorsList.style.padding = "12px 16px";
-			
-			result.errors.forEach((error, index) => {
-				const errorItem = errorsList.createEl("div");
-				errorItem.style.padding = "8px 0";
-				if (index > 0) {
-					errorItem.style.borderTop = "1px solid var(--background-modifier-border)";
+			// Hover effect
+			row.addEventListener("mouseenter", () => {
+				row.style.backgroundColor = "var(--background-modifier-hover)";
+			});
+			row.addEventListener("mouseleave", () => {
+				if (index % 2 === 1) {
+					row.style.backgroundColor =
+						"var(--background-modifier-hover-alpha)";
+				} else {
+					row.style.backgroundColor = "";
 				}
-				errorItem.style.display = "flex";
-				errorItem.style.alignItems = "flex-start";
-				errorItem.style.gap = "8px";
-				
-				const errorIcon = errorItem.createEl("span", { text: "❌" });
-				errorIcon.style.fontSize = "var(--font-ui-smaller)";
-				errorIcon.style.marginTop = "2px";
-				
-				const errorContent = errorItem.createEl("div");
-				errorContent.style.flex = "1";
-				
-				const propertyName = errorContent.createEl("span", { text: error.property });
-				propertyName.style.fontFamily = "var(--font-monospace)";
-				propertyName.style.fontWeight = "600";
-				propertyName.style.backgroundColor = "var(--background-modifier-border)";
-				propertyName.style.padding = "2px 6px";
-				propertyName.style.borderRadius = "3px";
-				propertyName.style.fontSize = "var(--font-ui-smaller)";
-				
-				const errorMessage = errorContent.createEl("div", { text: error.message });
-				errorMessage.style.fontSize = "var(--font-ui-small)";
-				errorMessage.style.color = "var(--text-muted)";
-				errorMessage.style.marginTop = "4px";
 			});
 		});
 
 		// Refresh button at bottom
 		const footer = contentEl.createEl("div");
-		footer.style.marginTop = "1rem";
+		footer.style.marginTop = "8px";
 		footer.style.textAlign = "center";
-		
+
 		const refreshButton = footer.createEl("button", { text: "Refresh" });
-		refreshButton.addEventListener("click", () => this.plugin.checkAllFiles());
+		refreshButton.style.fontSize = "var(--font-ui-small)";
+		refreshButton.style.padding = "4px 8px";
+		refreshButton.addEventListener("click", () =>
+			this.plugin.checkAllFiles()
+		);
 	}
 }
