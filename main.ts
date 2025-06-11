@@ -132,21 +132,19 @@ export default class TypeCheckerPlugin extends Plugin {
 
 	async checkAllFiles() {
 		const files = this.app.vault.getMarkdownFiles();
-		let totalErrors = 0;
-		let filesWithErrors = 0;
+		const allResults: { file: TFile; errors: ValidationError[] }[] = [];
 
 		for (const file of files) {
 			const errors = await this.validateFile(file);
 			if (errors.length > 0) {
-				filesWithErrors++;
-				totalErrors += errors.length;
+				allResults.push({ file, errors });
 			}
 		}
 
-		if (totalErrors === 0) {
+		if (allResults.length === 0) {
 			new Notice("✅ No frontmatter type errors found in any files");
 		} else {
-			new Notice(`❌ Found ${totalErrors} errors in ${filesWithErrors} files`);
+			new TypeCheckResultsModal(this.app, allResults).open();
 		}
 	}
 
@@ -160,8 +158,8 @@ export default class TypeCheckerPlugin extends Plugin {
 		}
 
 		for (const [property, value] of Object.entries(frontmatter)) {
-			// Skip position metadata
-			if (property === "position") continue;
+			// Skip position metadata and built-in Obsidian properties
+			if (property === "position" || property === "aliases" || property === "tags") continue;
 
 			const expectedType = this.propertyTypes[property];
 			if (!expectedType) continue; // No type defined for this property
@@ -222,6 +220,117 @@ export default class TypeCheckerPlugin extends Plugin {
 	}
 }
 
+class TypeCheckResultsModal extends Modal {
+	constructor(app: App, private results: { file: TFile; errors: ValidationError[] }[]) {
+		super(app);
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.empty();
+
+		// Header
+		const header = contentEl.createEl("div");
+		header.style.marginBottom = "1rem";
+		
+		const title = header.createEl("h2", { text: "Frontmatter Type Check Results" });
+		title.style.margin = "0 0 0.5rem 0";
+		
+		const totalErrors = this.results.reduce((sum, result) => sum + result.errors.length, 0);
+		const summary = header.createEl("p", { 
+			text: `Found ${totalErrors} errors in ${this.results.length} files`
+		});
+		summary.style.margin = "0";
+		summary.style.color = "var(--text-muted)";
+
+		// Results container
+		const resultsContainer = contentEl.createEl("div");
+		resultsContainer.style.maxHeight = "60vh";
+		resultsContainer.style.overflowY = "auto";
+		resultsContainer.style.border = "1px solid var(--background-modifier-border)";
+		resultsContainer.style.borderRadius = "6px";
+
+		this.results.forEach((result, index) => {
+			const fileSection = resultsContainer.createEl("div");
+			fileSection.style.borderBottom = index < this.results.length - 1 ? "1px solid var(--background-modifier-border)" : "none";
+			
+			// File header
+			const fileHeader = fileSection.createEl("div");
+			fileHeader.style.padding = "12px 16px 8px 16px";
+			fileHeader.style.backgroundColor = "var(--background-modifier-hover)";
+			fileHeader.style.display = "flex";
+			fileHeader.style.justifyContent = "space-between";
+			fileHeader.style.alignItems = "center";
+			fileHeader.style.cursor = "pointer";
+			
+			const fileName = fileHeader.createEl("span", { text: result.file.path });
+			fileName.style.fontWeight = "600";
+			fileName.style.fontFamily = "var(--font-monospace)";
+			fileName.style.fontSize = "var(--font-ui-small)";
+			
+			const errorCount = fileHeader.createEl("span", { text: `${result.errors.length} error${result.errors.length > 1 ? 's' : ''}` });
+			errorCount.style.backgroundColor = "var(--text-error)";
+			errorCount.style.color = "white";
+			errorCount.style.padding = "2px 8px";
+			errorCount.style.borderRadius = "12px";
+			errorCount.style.fontSize = "var(--font-ui-smaller)";
+			errorCount.style.fontWeight = "500";
+
+			// Click to open file
+			fileHeader.addEventListener("click", () => {
+				this.app.workspace.openLinkText(result.file.path, "");
+				this.close();
+			});
+
+			// Errors list
+			const errorsList = fileSection.createEl("div");
+			errorsList.style.padding = "8px 16px 12px 16px";
+			
+			result.errors.forEach((error) => {
+				const errorItem = errorsList.createEl("div");
+				errorItem.style.padding = "6px 0";
+				errorItem.style.display = "flex";
+				errorItem.style.alignItems = "flex-start";
+				errorItem.style.gap = "8px";
+				
+				const errorIcon = errorItem.createEl("span", { text: "❌" });
+				errorIcon.style.fontSize = "var(--font-ui-smaller)";
+				errorIcon.style.marginTop = "1px";
+				
+				const errorContent = errorItem.createEl("div");
+				errorContent.style.flex = "1";
+				
+				const propertyName = errorContent.createEl("span", { text: error.property });
+				propertyName.style.fontFamily = "var(--font-monospace)";
+				propertyName.style.fontWeight = "600";
+				propertyName.style.backgroundColor = "var(--background-modifier-border)";
+				propertyName.style.padding = "1px 4px";
+				propertyName.style.borderRadius = "3px";
+				propertyName.style.fontSize = "var(--font-ui-smaller)";
+				
+				const errorMessage = errorContent.createEl("div", { text: error.message });
+				errorMessage.style.fontSize = "var(--font-ui-small)";
+				errorMessage.style.color = "var(--text-muted)";
+				errorMessage.style.marginTop = "2px";
+			});
+		});
+
+		// Footer with close button
+		const footer = contentEl.createEl("div");
+		footer.style.marginTop = "1rem";
+		footer.style.textAlign = "right";
+		
+		const closeButton = footer.createEl("button", { text: "Close" });
+		closeButton.classList.add("mod-cta");
+		closeButton.addEventListener("click", () => this.close());
+	}
+
+	onClose() {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
 class TypeCheckerSettingTab extends PluginSettingTab {
 	plugin: TypeCheckerPlugin;
 
@@ -267,7 +376,7 @@ class TypeCheckerSettingTab extends PluginSettingTab {
 		description.addClass("setting-item-description");
 		description.setText("Property types are configured in ");
 		description.createEl("code", { text: ".obsidian/types.json" });
-		description.appendText(". The plugin will validate frontmatter properties against these type definitions.");
+		description.appendText(". The plugin will validate frontmatter properties against these type definitions. Built-in Obsidian properties (aliases, tags) are handled internally and not validated by this plugin.");
 
 		if (Object.keys(this.plugin.propertyTypes).length > 0) {
 			const tableContainer = containerEl.createEl("div");
@@ -296,27 +405,51 @@ class TypeCheckerSettingTab extends PluginSettingTab {
 			typeHeader.style.fontWeight = "600";
 			typeHeader.style.borderBottom = "1px solid var(--background-modifier-border)";
 
+			const statusHeader = header.createEl("th", { text: "" });
+			statusHeader.style.padding = "8px 12px";
+			statusHeader.style.textAlign = "left";
+			statusHeader.style.fontWeight = "600";
+			statusHeader.style.borderBottom = "1px solid var(--background-modifier-border)";
+
 			Object.entries(this.plugin.propertyTypes).forEach(([property, type], index) => {
 				const row = table.createEl("tr");
 				if (index % 2 === 1) {
 					row.style.backgroundColor = "var(--background-modifier-hover)";
 				}
 				
+				const isBuiltIn = property === "aliases" || property === "tags";
+				
+				// Property name column
 				const propertyCell = row.createEl("td", { text: property });
 				propertyCell.style.padding = "8px 12px";
 				propertyCell.style.fontFamily = "var(--font-monospace)";
 				propertyCell.style.fontSize = "var(--font-ui-smaller)";
+				if (isBuiltIn) {
+					propertyCell.style.opacity = "0.6";
+				}
 				
+				// Type column
 				const typeCell = row.createEl("td");
 				typeCell.style.padding = "8px 12px";
 				
 				const typeSpan = typeCell.createEl("span", { text: type });
-				typeSpan.style.backgroundColor = "var(--interactive-accent)";
-				typeSpan.style.color = "var(--text-on-accent)";
+				typeSpan.style.backgroundColor = isBuiltIn ? "var(--background-modifier-border)" : "var(--interactive-accent)";
+				typeSpan.style.color = isBuiltIn ? "var(--text-muted)" : "var(--text-on-accent)";
 				typeSpan.style.padding = "2px 6px";
 				typeSpan.style.borderRadius = "4px";
 				typeSpan.style.fontSize = "var(--font-ui-smaller)";
 				typeSpan.style.fontWeight = "500";
+				
+				// Status column
+				const statusCell = row.createEl("td");
+				statusCell.style.padding = "8px 12px";
+				
+				if (isBuiltIn) {
+					const statusText = statusCell.createEl("span", { text: "not checked" });
+					statusText.style.fontSize = "var(--font-ui-smaller)";
+					statusText.style.color = "var(--text-muted)";
+					statusText.style.fontStyle = "italic";
+				}
 			});
 		} else {
 			containerEl.createEl("p", { 
