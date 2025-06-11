@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "obsidian-typechecker",
+	"name": "Obsidian Type Checker",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Type Checker for Obsidian frontmatter",
+	"author": "Fred Oliveira",
+	"authorUrl": "https://helloform.com",
 	"isDesktopOnly": false
 }
