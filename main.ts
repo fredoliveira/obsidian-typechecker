@@ -264,23 +264,59 @@ class TypeCheckerSettingTab extends PluginSettingTab {
 		containerEl.createEl("h3", { text: "Property Types" });
 		
 		const description = containerEl.createEl("p");
+		description.addClass("setting-item-description");
 		description.setText("Property types are configured in ");
 		description.createEl("code", { text: ".obsidian/types.json" });
 		description.appendText(". The plugin will validate frontmatter properties against these type definitions.");
 
 		if (Object.keys(this.plugin.propertyTypes).length > 0) {
-			const table = containerEl.createEl("table");
+			const tableContainer = containerEl.createEl("div");
+			tableContainer.style.marginTop = "1em";
+			tableContainer.style.border = "1px solid var(--background-modifier-border)";
+			tableContainer.style.borderRadius = "6px";
+			tableContainer.style.overflow = "hidden";
+			
+			const table = tableContainer.createEl("table");
 			table.style.width = "100%";
-			table.style.marginTop = "1em";
+			table.style.borderCollapse = "collapse";
+			table.style.fontSize = "var(--font-ui-small)";
 			
 			const header = table.createEl("tr");
-			header.createEl("th", { text: "Property" });
-			header.createEl("th", { text: "Type" });
+			header.style.backgroundColor = "var(--background-modifier-border)";
+			
+			const propertyHeader = header.createEl("th", { text: "Property" });
+			propertyHeader.style.padding = "8px 12px";
+			propertyHeader.style.textAlign = "left";
+			propertyHeader.style.fontWeight = "600";
+			propertyHeader.style.borderBottom = "1px solid var(--background-modifier-border)";
+			
+			const typeHeader = header.createEl("th", { text: "Type" });
+			typeHeader.style.padding = "8px 12px";
+			typeHeader.style.textAlign = "left";
+			typeHeader.style.fontWeight = "600";
+			typeHeader.style.borderBottom = "1px solid var(--background-modifier-border)";
 
-			Object.entries(this.plugin.propertyTypes).forEach(([property, type]) => {
+			Object.entries(this.plugin.propertyTypes).forEach(([property, type], index) => {
 				const row = table.createEl("tr");
-				row.createEl("td", { text: property });
-				row.createEl("td", { text: type });
+				if (index % 2 === 1) {
+					row.style.backgroundColor = "var(--background-modifier-hover)";
+				}
+				
+				const propertyCell = row.createEl("td", { text: property });
+				propertyCell.style.padding = "8px 12px";
+				propertyCell.style.fontFamily = "var(--font-monospace)";
+				propertyCell.style.fontSize = "var(--font-ui-smaller)";
+				
+				const typeCell = row.createEl("td");
+				typeCell.style.padding = "8px 12px";
+				
+				const typeSpan = typeCell.createEl("span", { text: type });
+				typeSpan.style.backgroundColor = "var(--interactive-accent)";
+				typeSpan.style.color = "var(--text-on-accent)";
+				typeSpan.style.padding = "2px 6px";
+				typeSpan.style.borderRadius = "4px";
+				typeSpan.style.fontSize = "var(--font-ui-smaller)";
+				typeSpan.style.fontWeight = "500";
 			});
 		} else {
 			containerEl.createEl("p", { 
