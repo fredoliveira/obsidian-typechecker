@@ -11,7 +11,11 @@ import {
 	CachedMetadata,
 	getFrontMatterInfo,
 	normalizePath,
+	ItemView,
+	WorkspaceLeaf,
 } from "obsidian";
+
+export const TYPE_CHECKER_VIEW_TYPE = "type-checker-view";
 
 interface TypeCheckerSettings {
 	enableAutoCheck: boolean;
@@ -42,6 +46,12 @@ export default class TypeCheckerPlugin extends Plugin {
 		await this.loadSettings();
 		await this.loadPropertyTypes();
 
+		// Register the custom view
+		this.registerView(
+			TYPE_CHECKER_VIEW_TYPE,
+			(leaf) => new TypeCheckerView(leaf, this)
+		);
+
 		// Add ribbon icon for type checking
 		const ribbonIconEl = this.addRibbonIcon(
 			"shield-check",
@@ -66,6 +76,14 @@ export default class TypeCheckerPlugin extends Plugin {
 			name: "Check all files frontmatter",
 			callback: () => {
 				this.checkAllFiles();
+			},
+		});
+
+		this.addCommand({
+			id: "open-type-checker-view",
+			name: "Open Type Checker",
+			callback: () => {
+				this.activateView();
 			},
 		});
 
@@ -141,11 +159,38 @@ export default class TypeCheckerPlugin extends Plugin {
 			}
 		}
 
+		// Open or focus the type checker view
+		this.activateView();
+		
+		// Update the view with results
+		const leaf = this.app.workspace.getLeavesOfType(TYPE_CHECKER_VIEW_TYPE)[0];
+		if (leaf?.view instanceof TypeCheckerView) {
+			leaf.view.updateResults(allResults);
+		}
+
 		if (allResults.length === 0) {
 			new Notice("✅ No frontmatter type errors found in any files");
-		} else {
-			new TypeCheckResultsModal(this.app, allResults).open();
 		}
+	}
+
+	async activateView() {
+		const { workspace } = this.app;
+
+		let leaf: WorkspaceLeaf | null = null;
+		const leaves = workspace.getLeavesOfType(TYPE_CHECKER_VIEW_TYPE);
+
+		if (leaves.length > 0) {
+			// A leaf with our view already exists, use that
+			leaf = leaves[0];
+		} else {
+			// Our view could not be found in the workspace, create a new leaf
+			// in the right sidebar for it
+			leaf = workspace.getRightLeaf(false);
+			await leaf.setViewState({ type: TYPE_CHECKER_VIEW_TYPE, active: true });
+		}
+
+		// "Reveal" the leaf in case it is in a collapsed sidebar
+		workspace.revealLeaf(leaf);
 	}
 
 	async validateFile(file: TFile): Promise<ValidationError[]> {
@@ -220,43 +265,98 @@ export default class TypeCheckerPlugin extends Plugin {
 	}
 }
 
-class TypeCheckResultsModal extends Modal {
-	constructor(app: App, private results: { file: TFile; errors: ValidationError[] }[]) {
-		super(app);
+export class TypeCheckerView extends ItemView {
+	private results: { file: TFile; errors: ValidationError[] }[] = [];
+
+	constructor(leaf: WorkspaceLeaf, private plugin: TypeCheckerPlugin) {
+		super(leaf);
 	}
 
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.empty();
+	getViewType() {
+		return TYPE_CHECKER_VIEW_TYPE;
+	}
 
-		// Header
-		const header = contentEl.createEl("div");
-		header.style.marginBottom = "1rem";
-		
-		const title = header.createEl("h2", { text: "Frontmatter Type Check Results" });
-		title.style.margin = "0 0 0.5rem 0";
-		
+	getDisplayText() {
+		return "Type Checker";
+	}
+
+	getIcon() {
+		return "shield-check";
+	}
+
+	async onOpen() {
+		const container = this.containerEl.children[1];
+		container.empty();
+		container.createEl("div", { text: "Type Checker", cls: "view-header" });
+		this.renderResults();
+	}
+
+	async onClose() {
+		// Nothing to clean up
+	}
+
+	updateResults(results: { file: TFile; errors: ValidationError[] }[]) {
+		this.results = results;
+		this.renderResults();
+	}
+
+	private renderResults() {
+		const container = this.containerEl.children[1];
+		// Clear existing content except header
+		const existing = container.querySelector('.type-checker-content');
+		if (existing) existing.remove();
+
+		const contentEl = container.createEl("div", { cls: "type-checker-content" });
+		contentEl.style.padding = "16px";
+		contentEl.style.height = "100%";
+		contentEl.style.overflowY = "auto";
+
+		if (this.results.length === 0) {
+			const emptyState = contentEl.createEl("div");
+			emptyState.style.textAlign = "center";
+			emptyState.style.color = "var(--text-muted)";
+			emptyState.style.marginTop = "2rem";
+			
+			emptyState.createEl("div", { text: "🛡️", cls: "type-checker-icon" });
+			emptyState.createEl("h3", { text: "No type errors found" });
+			emptyState.createEl("p", { text: "Run 'Check all files' to scan your vault for frontmatter type issues." });
+			
+			const checkButton = emptyState.createEl("button", { text: "Check All Files" });
+			checkButton.classList.add("mod-cta");
+			checkButton.addEventListener("click", () => this.plugin.checkAllFiles());
+			
+			return;
+		}
+
+		// Summary
 		const totalErrors = this.results.reduce((sum, result) => sum + result.errors.length, 0);
-		const summary = header.createEl("p", { 
-			text: `Found ${totalErrors} errors in ${this.results.length} files`
-		});
-		summary.style.margin = "0";
-		summary.style.color = "var(--text-muted)";
+		const summary = contentEl.createEl("div");
+		summary.style.marginBottom = "1rem";
+		summary.style.padding = "12px";
+		summary.style.backgroundColor = "var(--background-modifier-error)";
+		summary.style.borderRadius = "6px";
+		summary.style.border = "1px solid var(--background-modifier-border)";
+		
+		const summaryTitle = summary.createEl("h3", { text: `${totalErrors} Type Errors Found` });
+		summaryTitle.style.margin = "0 0 4px 0";
+		summaryTitle.style.color = "var(--text-error)";
+		
+		const summaryDesc = summary.createEl("p", { text: `Found in ${this.results.length} files` });
+		summaryDesc.style.margin = "0";
+		summaryDesc.style.color = "var(--text-muted)";
+		summaryDesc.style.fontSize = "var(--font-ui-small)";
 
-		// Results container
-		const resultsContainer = contentEl.createEl("div");
-		resultsContainer.style.maxHeight = "60vh";
-		resultsContainer.style.overflowY = "auto";
-		resultsContainer.style.border = "1px solid var(--background-modifier-border)";
-		resultsContainer.style.borderRadius = "6px";
-
-		this.results.forEach((result, index) => {
-			const fileSection = resultsContainer.createEl("div");
-			fileSection.style.borderBottom = index < this.results.length - 1 ? "1px solid var(--background-modifier-border)" : "none";
+		// Results
+		this.results.forEach((result) => {
+			const fileSection = contentEl.createEl("div");
+			fileSection.style.marginBottom = "1rem";
+			fileSection.style.border = "1px solid var(--background-modifier-border)";
+			fileSection.style.borderRadius = "6px";
+			fileSection.style.overflow = "hidden";
 			
 			// File header
 			const fileHeader = fileSection.createEl("div");
-			fileHeader.style.padding = "12px 16px 8px 16px";
+			fileHeader.style.padding = "12px 16px";
 			fileHeader.style.backgroundColor = "var(--background-modifier-hover)";
 			fileHeader.style.display = "flex";
 			fileHeader.style.justifyContent = "space-between";
@@ -279,23 +379,25 @@ class TypeCheckResultsModal extends Modal {
 			// Click to open file
 			fileHeader.addEventListener("click", () => {
 				this.app.workspace.openLinkText(result.file.path, "");
-				this.close();
 			});
 
 			// Errors list
 			const errorsList = fileSection.createEl("div");
-			errorsList.style.padding = "8px 16px 12px 16px";
+			errorsList.style.padding = "12px 16px";
 			
-			result.errors.forEach((error) => {
+			result.errors.forEach((error, index) => {
 				const errorItem = errorsList.createEl("div");
-				errorItem.style.padding = "6px 0";
+				errorItem.style.padding = "8px 0";
+				if (index > 0) {
+					errorItem.style.borderTop = "1px solid var(--background-modifier-border)";
+				}
 				errorItem.style.display = "flex";
 				errorItem.style.alignItems = "flex-start";
 				errorItem.style.gap = "8px";
 				
 				const errorIcon = errorItem.createEl("span", { text: "❌" });
 				errorIcon.style.fontSize = "var(--font-ui-smaller)";
-				errorIcon.style.marginTop = "1px";
+				errorIcon.style.marginTop = "2px";
 				
 				const errorContent = errorItem.createEl("div");
 				errorContent.style.flex = "1";
@@ -304,30 +406,24 @@ class TypeCheckResultsModal extends Modal {
 				propertyName.style.fontFamily = "var(--font-monospace)";
 				propertyName.style.fontWeight = "600";
 				propertyName.style.backgroundColor = "var(--background-modifier-border)";
-				propertyName.style.padding = "1px 4px";
+				propertyName.style.padding = "2px 6px";
 				propertyName.style.borderRadius = "3px";
 				propertyName.style.fontSize = "var(--font-ui-smaller)";
 				
 				const errorMessage = errorContent.createEl("div", { text: error.message });
 				errorMessage.style.fontSize = "var(--font-ui-small)";
 				errorMessage.style.color = "var(--text-muted)";
-				errorMessage.style.marginTop = "2px";
+				errorMessage.style.marginTop = "4px";
 			});
 		});
 
-		// Footer with close button
+		// Refresh button at bottom
 		const footer = contentEl.createEl("div");
 		footer.style.marginTop = "1rem";
-		footer.style.textAlign = "right";
+		footer.style.textAlign = "center";
 		
-		const closeButton = footer.createEl("button", { text: "Close" });
-		closeButton.classList.add("mod-cta");
-		closeButton.addEventListener("click", () => this.close());
-	}
-
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
+		const refreshButton = footer.createEl("button", { text: "Refresh" });
+		refreshButton.addEventListener("click", () => this.plugin.checkAllFiles());
 	}
 }
 
