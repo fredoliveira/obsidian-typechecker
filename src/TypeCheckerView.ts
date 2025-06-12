@@ -169,6 +169,7 @@ export class TypeCheckerView extends ItemView {
 			fileCell.style.padding = "4px 6px";
 			fileCell.style.fontFamily = "var(--font-interface)";
 			fileCell.style.fontSize = "var(--font-ui-smaller)";
+			fileCell.style.color = "var(--text-faint)";
 			fileCell.style.maxWidth = "0";
 			fileCell.style.overflow = "hidden";
 			fileCell.style.textOverflow = "ellipsis";
@@ -183,7 +184,7 @@ export class TypeCheckerView extends ItemView {
 			errorCell.style.fontWeight = "300";
 			errorCell.style.fontFamily = "var(--font-interface)";
 			errorCell.style.fontSize = "var(--font-smaller)";
-			errorCell.style.color = "var(--text-error)";
+			errorCell.style.color = "var(--text-muted)";
 			errorCell.style.textAlign = "right";
 			errorCell.textContent = result.errors.length.toString();
 
