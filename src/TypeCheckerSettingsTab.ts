@@ -28,8 +28,10 @@ export class TypeCheckerSettingTab extends PluginSettingTab {
           })
       );
 
-
-    containerEl.createEl("h3", { text: "Property Types" });
+    containerEl.createEl("h3", {
+      text: "Existing property types",
+      cls: "typechecker-settings-header",
+    });
 
     const description = containerEl.createEl("p");
     description.addClass("setting-item-description");
@@ -40,87 +42,57 @@ export class TypeCheckerSettingTab extends PluginSettingTab {
     );
 
     if (Object.keys(this.plugin.propertyTypes).length > 0) {
-      const tableContainer = containerEl.createEl("div");
-      tableContainer.style.marginTop = "1em";
-      tableContainer.style.border =
-        "1px solid var(--background-modifier-border)";
-      tableContainer.style.borderRadius = "6px";
-      tableContainer.style.overflow = "hidden";
+      const table = containerEl.createEl("table", {
+        cls: "typechecker-table",
+      });
 
-      const table = tableContainer.createEl("table");
-      table.style.width = "100%";
-      table.style.borderCollapse = "collapse";
-      table.style.fontSize = "var(--font-ui-small)";
+      // Table header
+      const thead = table.createEl("thead");
+      const headerRow = thead.createEl("tr", { cls: "typechecker-table-header" });
 
-      const header = table.createEl("tr");
-      header.style.backgroundColor = "var(--background-modifier-border)";
+      headerRow.createEl("th", { text: "Property" });
+      headerRow.createEl("th", { text: "Type" });
+      headerRow.createEl("th", { text: "" });
 
-      const propertyHeader = header.createEl("th", { text: "Property" });
-      propertyHeader.style.padding = "8px 12px";
-      propertyHeader.style.textAlign = "left";
-      propertyHeader.style.fontWeight = "600";
-      propertyHeader.style.borderBottom =
-        "1px solid var(--background-modifier-border)";
-
-      const typeHeader = header.createEl("th", { text: "Type" });
-      typeHeader.style.padding = "8px 12px";
-      typeHeader.style.textAlign = "left";
-      typeHeader.style.fontWeight = "600";
-      typeHeader.style.borderBottom =
-        "1px solid var(--background-modifier-border)";
-
-      const statusHeader = header.createEl("th", { text: "" });
-      statusHeader.style.padding = "8px 12px";
-      statusHeader.style.textAlign = "left";
-      statusHeader.style.fontWeight = "600";
-      statusHeader.style.borderBottom =
-        "1px solid var(--background-modifier-border)";
-
+      // Table body
+      const tbody = table.createEl("tbody");
       Object.entries(this.plugin.propertyTypes).forEach(
-        ([property, type], index) => {
-          const row = table.createEl("tr");
-          if (index % 2 === 1) {
-            row.style.backgroundColor = "var(--background-modifier-hover)";
-          }
+        ([property, type]) => {
+          const row = tbody.createEl("tr", { cls: "typechecker-table-row" });
 
           const isBuiltIn = property === "aliases" || property === "tags";
 
           // Property name column
-          const propertyCell = row.createEl("td", { text: property });
-          propertyCell.style.padding = "8px 12px";
-          propertyCell.style.fontFamily = "var(--font-monospace)";
-          propertyCell.style.fontSize = "var(--font-ui-smaller)";
+          const propertyCell = row.createEl("td", {
+            text: property,
+            cls: "typechecker-settings-property-cell",
+          });
           if (isBuiltIn) {
-            propertyCell.style.opacity = "0.6";
+            propertyCell.addClass("typechecker-settings-builtin");
           }
 
           // Type column
-          const typeCell = row.createEl("td");
-          typeCell.style.padding = "8px 12px";
+          const typeCell = row.createEl("td", {
+            cls: "typechecker-settings-type-cell",
+          });
 
-          const typeSpan = typeCell.createEl("span", { text: type });
-          typeSpan.style.backgroundColor = isBuiltIn
-            ? "var(--background-modifier-border)"
-            : "var(--interactive-accent)";
-          typeSpan.style.color = isBuiltIn
-            ? "var(--text-muted)"
-            : "var(--text-on-accent)";
-          typeSpan.style.padding = "2px 6px";
-          typeSpan.style.borderRadius = "4px";
-          typeSpan.style.fontSize = "var(--font-ui-smaller)";
-          typeSpan.style.fontWeight = "500";
+          const typeSpan = typeCell.createEl("span", {
+            text: type,
+            cls: isBuiltIn
+              ? "typechecker-settings-type-builtin"
+              : "typechecker-settings-type-custom",
+          });
 
           // Status column
-          const statusCell = row.createEl("td");
-          statusCell.style.padding = "8px 12px";
+          const statusCell = row.createEl("td", {
+            cls: "typechecker-settings-status-cell",
+          });
 
           if (isBuiltIn) {
-            const statusText = statusCell.createEl("span", {
+            statusCell.createEl("span", {
               text: "not checked",
+              cls: "typechecker-settings-status-text",
             });
-            statusText.style.fontSize = "var(--font-ui-smaller)";
-            statusText.style.color = "var(--text-muted)";
-            statusText.style.fontStyle = "italic";
           }
         }
       );

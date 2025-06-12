@@ -17,7 +17,7 @@ export class TypeCheckerView extends ItemView {
   }
 
   getDisplayText() {
-    return "Type Checker";
+    return "Property issues";
   }
 
   getIcon() {
@@ -119,6 +119,15 @@ export class TypeCheckerView extends ItemView {
     });
   }
 
+  // MARK: Rendering: Current file no issues
+  private renderCurrentFileNoIssues(contentEl: HTMLElement) {
+    // Current file section header
+    contentEl.createEl("div", {
+      text: "Current file: No issues found",
+      cls: "typechecker-section-header",
+    });
+  }
+
   // MARK: Rendering: Vault-wide table
   private renderVaultWideTable(contentEl: HTMLElement) {
     // Summary
@@ -148,7 +157,10 @@ export class TypeCheckerView extends ItemView {
 
     // Table body
     const tbody = table.createEl("tbody");
-    this.results.forEach((result) => {
+    const sortedResults = [...this.results].sort(
+      (a, b) => b.errors.length - a.errors.length
+    );
+    sortedResults.forEach((result) => {
       const row = tbody.createEl("tr", {
         cls: "typechecker-table-row typechecker-clickable",
       });
@@ -211,9 +223,13 @@ export class TypeCheckerView extends ItemView {
         )?.errors || []
       : [];
 
-    // Show current file table if current file has errors
-    if (currentFileErrors.length > 0) {
-      this.renderCurrentFileTable(contentEl, currentFileErrors);
+    // Always show current file section if there's a current file
+    if (this.currentFile && this.currentFile.extension === "md") {
+      if (currentFileErrors.length > 0) {
+        this.renderCurrentFileTable(contentEl, currentFileErrors);
+      } else {
+        this.renderCurrentFileNoIssues(contentEl);
+      }
     }
 
     // Show vault-wide table if there are any errors

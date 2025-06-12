@@ -33,11 +33,10 @@ export class TypeCheckerPlugin extends Plugin {
       (leaf) => new TypeCheckerView(leaf, this)
     );
 
-
     // Add command to open Type Checker view
     this.addCommand({
       id: "open-type-checker-view",
-      name: "Open Type Checker",
+      name: "Open property issues view",
       callback: () => {
         this.activateView();
       },
@@ -67,7 +66,11 @@ export class TypeCheckerPlugin extends Plugin {
     this.registerEvent(
       this.app.metadataCache.on("changed", async (file) => {
         const currentFile = this.app.workspace.getActiveFile();
-        if (currentFile && file.path === currentFile.path && file.extension === "md") {
+        if (
+          currentFile &&
+          file.path === currentFile.path &&
+          file.extension === "md"
+        ) {
           await this.updateViewCurrentFile(true); // Force validation
         }
       })
@@ -99,7 +102,6 @@ export class TypeCheckerPlugin extends Plugin {
       this.propertyTypes = {};
     }
   }
-
 
   async checkAllFiles() {
     const files = this.app.vault.getMarkdownFiles();
@@ -174,7 +176,10 @@ export class TypeCheckerPlugin extends Plugin {
     }
   }
 
-  async validateFile(file: TFile, skipCache = false): Promise<ValidationError[]> {
+  async validateFile(
+    file: TFile,
+    skipCache = false
+  ): Promise<ValidationError[]> {
     // Check cache first (unless skipping cache)
     const cacheKey = file.path;
     const cached = this.validationCache.get(cacheKey);
