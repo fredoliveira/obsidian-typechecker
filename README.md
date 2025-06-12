@@ -31,17 +31,17 @@ Create a `.obsidian/types.json` file in your vault to define your property types
 
 ```json
 {
-	"types": {
-		"title": "text",
-		"created": "date",
-		"modified": "datetime",
-		"tags": "tags",
-		"category": "list",
-		"status": "text",
-		"priority": "number",
-		"completed": "checkbox",
-		"aliases": "aliases"
-	}
+  "types": {
+    "title": "text",
+    "created": "date",
+    "modified": "datetime",
+    "tags": "tags",
+    "category": "list",
+    "status": "text",
+    "priority": "number",
+    "completed": "checkbox",
+    "aliases": "aliases"
+  }
 }
 ```
 
@@ -59,6 +59,7 @@ Create a `.obsidian/types.json` file in your vault to define your property types
 ### Type Checker View
 
 The sidebar view shows:
+
 - **Current file errors** - Validation issues in the currently active file
 - **Vault-wide issues** - Summary of all files with type errors
 - **Clickable file list** - Click any file to open it and see its issues
@@ -66,12 +67,14 @@ The sidebar view shows:
 ### Auto-checking
 
 Enable auto-checking in the plugin settings to automatically validate frontmatter when:
+
 - Switching between files
 - Saving file changes (metadata updates)
 
 ### Settings
 
 Access plugin settings through Settings → Community Plugins → Property Type Checker to:
+
 - Toggle auto-checking on file changes
 - View your current property type definitions
 
@@ -92,18 +95,19 @@ And these type definitions:
 
 ```json
 {
-	"types": {
-		"title": "text",
-		"created": "date",
-		"priority": "number",
-		"completed": "checkbox"
-	}
+  "types": {
+    "title": "text",
+    "created": "date",
+    "priority": "number",
+    "completed": "checkbox"
+  }
 }
 ```
 
 The plugin will report:
+
 - ❌ **created**: expected date, got text
-- ❌ **priority**: expected number, got text  
+- ❌ **priority**: expected number, got text
 - ❌ **completed**: expected checkbox, got text
 
 ## Development
