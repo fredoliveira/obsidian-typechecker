@@ -23,6 +23,12 @@ jobs:
           npm install
           npm run build
 
+      - name: Create release zip file
+        run: |
+          mkdir obsidian-typechecker
+          cp main.js manifest.json styles.css obsidian-typechecker
+          zip -r obsidian-typechecker.zip obsidian-typechecker
+
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -32,4 +38,4 @@ jobs:
           gh release create "$tag" \
             --title="$tag" \
             --draft \
-            main.js manifest.json styles.css
+            main.js manifest.json styles.css obsidian-typechecker.zip
