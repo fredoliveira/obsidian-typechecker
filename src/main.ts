@@ -33,33 +33,8 @@ export class TypeCheckerPlugin extends Plugin {
       (leaf) => new TypeCheckerView(leaf, this)
     );
 
-    // Add ribbon icon for type checking
-    const ribbonIconEl = this.addRibbonIcon(
-      "list-check",
-      "Type Checker",
-      (evt: MouseEvent) => {
-        this.checkCurrentFile();
-      }
-    );
-    ribbonIconEl.addClass("typechecker-ribbon-class");
 
-    // Add commands
-    this.addCommand({
-      id: "check-current-file",
-      name: "Check current file frontmatter",
-      callback: () => {
-        this.checkCurrentFile();
-      },
-    });
-
-    this.addCommand({
-      id: "check-all-files",
-      name: "Check all files frontmatter",
-      callback: () => {
-        this.checkAllFiles();
-      },
-    });
-
+    // Add command to open Type Checker view
     this.addCommand({
       id: "open-type-checker-view",
       name: "Open Type Checker",
@@ -75,9 +50,6 @@ export class TypeCheckerPlugin extends Plugin {
     if (this.settings.enableAutoCheck) {
       this.registerEvent(
         this.app.workspace.on("active-leaf-change", async () => {
-          if (this.settings.enableAutoCheck) {
-            await this.checkCurrentFile();
-          }
           // Update the view with the new current file
           await this.updateViewCurrentFile();
         })
@@ -88,6 +60,16 @@ export class TypeCheckerPlugin extends Plugin {
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", async () => {
         await this.updateViewCurrentFile();
+      })
+    );
+
+    // Revalidate current file when metadata cache updates
+    this.registerEvent(
+      this.app.metadataCache.on("changed", async (file) => {
+        const currentFile = this.app.workspace.getActiveFile();
+        if (currentFile && file.path === currentFile.path && file.extension === "md") {
+          await this.updateViewCurrentFile(true); // Force validation
+        }
       })
     );
   }
@@ -118,14 +100,6 @@ export class TypeCheckerPlugin extends Plugin {
     }
   }
 
-  async checkCurrentFile() {
-    const activeFile = this.app.workspace.getActiveFile();
-    if (!activeFile || activeFile.extension !== "md") {
-      return;
-    }
-
-    await this.validateFile(activeFile);
-  }
 
   async checkAllFiles() {
     const files = this.app.vault.getMarkdownFiles();
@@ -175,35 +149,40 @@ export class TypeCheckerPlugin extends Plugin {
     }
   }
 
-  async updateViewCurrentFile() {
-    // Debounce rapid file changes to prevent excessive validation
-    if (this.updateTimeout) {
+  async updateViewCurrentFile(forceValidation = false) {
+    // Debounce rapid file changes to prevent excessive validation (but not for forced updates)
+    if (this.updateTimeout && !forceValidation) {
       clearTimeout(this.updateTimeout);
     }
 
-    this.updateTimeout = setTimeout(async () => {
+    const updateFn = async () => {
       const leaf = this.app.workspace.getLeavesOfType(
         TYPE_CHECKER_VIEW_TYPE
       )[0];
       if (leaf?.view instanceof TypeCheckerView) {
         const currentFile = this.app.workspace.getActiveFile();
-        await leaf.view.updateCurrentFile(currentFile);
+        await leaf.view.updateCurrentFile(currentFile, forceValidation);
       }
       this.updateTimeout = null;
-    }, 100); // 100ms debounce
+    };
+
+    if (forceValidation) {
+      // Don't debounce forced updates (like file saves)
+      await updateFn();
+    } else {
+      this.updateTimeout = setTimeout(updateFn, 100); // 100ms debounce
+    }
   }
 
-  async validateFile(file: TFile): Promise<ValidationError[]> {
-    // Check cache first
+  async validateFile(file: TFile, skipCache = false): Promise<ValidationError[]> {
+    // Check cache first (unless skipping cache)
     const cacheKey = file.path;
     const cached = this.validationCache.get(cacheKey);
 
-    if (cached && cached.mtime === file.stat.mtime) {
-      console.log(`TypeChecker: Using cached validation for ${file.basename}`);
+    if (!skipCache && cached && cached.mtime === file.stat.mtime) {
       return cached.errors;
     }
 
-    console.time(`TypeChecker: Validating ${file.basename}`);
     const errors: ValidationError[] = [];
     const metadata = this.app.metadataCache.getFileCache(file);
     const frontmatter = metadata?.frontmatter;
@@ -211,7 +190,6 @@ export class TypeCheckerPlugin extends Plugin {
     if (!frontmatter) {
       // Cache empty result
       this.validationCache.set(cacheKey, { mtime: file.stat.mtime, errors });
-      console.timeEnd(`TypeChecker: Validating ${file.basename}`);
       return errors;
     }
 
@@ -237,7 +215,6 @@ export class TypeCheckerPlugin extends Plugin {
 
     // Cache the result
     this.validationCache.set(cacheKey, { mtime: file.stat.mtime, errors });
-    console.timeEnd(`TypeChecker: Validating ${file.basename}`);
     return errors;
   }
 

@@ -41,16 +41,10 @@ export class TypeCheckerView extends ItemView {
     await this.updateCurrentFile(this.app.workspace.getActiveFile());
   }
 
-  async updateCurrentFile(file: TFile | null) {
-    console.time(`TypeChecker: updateCurrentFile ${file?.basename || "null"}`);
-
-    // If this is the same file, just re-render (no validation needed)
-    if (this.currentFile === file) {
-      console.log(`TypeChecker: Same file, skipping validation`);
+  async updateCurrentFile(file: TFile | null, forceValidation = false) {
+    // If this is the same file and not forced, just re-render (no validation needed)
+    if (this.currentFile === file && !forceValidation) {
       this.renderResults();
-      console.timeEnd(
-        `TypeChecker: updateCurrentFile ${file?.basename || "null"}`
-      );
       return;
     }
 
@@ -58,12 +52,13 @@ export class TypeCheckerView extends ItemView {
 
     // If we have a current file, check it for errors and update the results
     if (file && file.extension === "md") {
-      const errors = await this.plugin.validateFile(file);
+      const errors = await this.plugin.validateFile(file, forceValidation);
 
       // Update or add this file's results
       const existingIndex = this.results.findIndex(
         (result) => result.file.path === file.path
       );
+
       if (existingIndex >= 0) {
         this.results[existingIndex] = { file, errors };
       } else if (errors.length > 0) {
@@ -77,9 +72,6 @@ export class TypeCheckerView extends ItemView {
     }
 
     this.renderResults();
-    console.timeEnd(
-      `TypeChecker: updateCurrentFile ${file?.basename || "null"}`
-    );
   }
 
   // MARK: Rendering: Current file table
@@ -176,7 +168,6 @@ export class TypeCheckerView extends ItemView {
 
       // Click to open file
       row.addEventListener("click", async () => {
-        console.time(`TypeChecker: Opening ${result.file.basename}`);
         try {
           // Use faster direct file opening instead of openLinkText
           await this.app.workspace.getLeaf().openFile(result.file);
@@ -185,7 +176,6 @@ export class TypeCheckerView extends ItemView {
           // Fallback to original method
           this.app.workspace.openLinkText(result.file.path, "");
         }
-        console.timeEnd(`TypeChecker: Opening ${result.file.basename}`);
       });
     });
   }
