@@ -1,8 +1,117 @@
-/*
+/* Main container */
+.typechecker-content {
+  padding: 6px;
+  height: 100%;
+  overflow-y: auto;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* Section headers */
+.typechecker-section-header {
+  margin-bottom: 12px;
+  font-size: var(--font-ui-small);
+  font-weight: 400;
+  color: var(--text-muted);
+}
 
-If your plugin does not need CSS, delete this file.
+.typechecker-vault-header {
+  margin-bottom: 8px;
+  font-size: var(--font-ui-small);
+  font-weight: 400;
+  color: var(--text-muted);
+}
 
-*/
+/* Tables */
+.typechecker-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-ui-small);
+  margin-bottom: 16px;
+}
+
+.typechecker-table-header {
+  background-color: var(--background-modifier-hover);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.typechecker-table-header th {
+  padding: 4px 6px;
+  text-align: left;
+  font-weight: 400;
+}
+
+.typechecker-table-header .typechecker-property-col {
+  width: 30%;
+}
+
+.typechecker-table-header .typechecker-errors-col {
+  width: 60px;
+  text-align: center;
+}
+
+/* Table rows */
+.typechecker-table-row {
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.typechecker-table-row:nth-child(even) {
+  background-color: var(--background-modifier-hover-alpha);
+}
+
+.typechecker-table-row.typechecker-clickable {
+  cursor: pointer;
+}
+
+.typechecker-table-row.typechecker-clickable:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+/* Table cells */
+.typechecker-property-cell {
+  padding: 4px 6px;
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-smaller);
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+.typechecker-issue-cell {
+  padding: 4px 6px;
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-smallest);
+  color: var(--text-error);
+}
+
+.typechecker-file-cell {
+  padding: 4px 6px;
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typechecker-error-count-cell {
+  padding: 4px 6px;
+  text-align: right;
+  font-weight: 300;
+  font-family: var(--font-interface);
+  font-size: var(--font-smaller);
+  color: var(--text-muted);
+}
+
+/* Empty state */
+.typechecker-empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  margin-top: 2rem;
+}
+
+.typechecker-empty-state h3 {
+  margin: 0.5rem 0;
+}
+
+.typechecker-empty-state p {
+  margin: 0.5rem 0;
+}
