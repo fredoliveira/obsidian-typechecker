@@ -18,6 +18,8 @@ const IGNORED_PROPERTIES = ["position", "aliases", "tags"];
 export class TypeCheckerPlugin extends Plugin {
   settings: TypeCheckerSettings;
   propertyTypes: PropertyTypes;
+  private updateTimeout: NodeJS.Timeout | null = null;
+  private validationCache: Map<string, { mtime: number; errors: ValidationError[] }> = new Map();
 
   async onload() {
     await this.loadSettings();
@@ -172,19 +174,40 @@ export class TypeCheckerPlugin extends Plugin {
   }
 
   async updateViewCurrentFile() {
-    const leaf = this.app.workspace.getLeavesOfType(TYPE_CHECKER_VIEW_TYPE)[0];
-    if (leaf?.view instanceof TypeCheckerView) {
-      const currentFile = this.app.workspace.getActiveFile();
-      await leaf.view.updateCurrentFile(currentFile);
+    // Debounce rapid file changes to prevent excessive validation
+    if (this.updateTimeout) {
+      clearTimeout(this.updateTimeout);
     }
+    
+    this.updateTimeout = setTimeout(async () => {
+      const leaf = this.app.workspace.getLeavesOfType(TYPE_CHECKER_VIEW_TYPE)[0];
+      if (leaf?.view instanceof TypeCheckerView) {
+        const currentFile = this.app.workspace.getActiveFile();
+        await leaf.view.updateCurrentFile(currentFile);
+      }
+      this.updateTimeout = null;
+    }, 100); // 100ms debounce
   }
 
   async validateFile(file: TFile): Promise<ValidationError[]> {
+    // Check cache first
+    const cacheKey = file.path;
+    const cached = this.validationCache.get(cacheKey);
+    
+    if (cached && cached.mtime === file.stat.mtime) {
+      console.log(`TypeChecker: Using cached validation for ${file.basename}`);
+      return cached.errors;
+    }
+
+    console.time(`TypeChecker: Validating ${file.basename}`);
     const errors: ValidationError[] = [];
     const metadata = this.app.metadataCache.getFileCache(file);
     const frontmatter = metadata?.frontmatter;
 
     if (!frontmatter) {
+      // Cache empty result
+      this.validationCache.set(cacheKey, { mtime: file.stat.mtime, errors });
+      console.timeEnd(`TypeChecker: Validating ${file.basename}`);
       return errors;
     }
 
@@ -208,6 +231,9 @@ export class TypeCheckerPlugin extends Plugin {
       }
     }
 
+    // Cache the result
+    this.validationCache.set(cacheKey, { mtime: file.stat.mtime, errors });
+    console.timeEnd(`TypeChecker: Validating ${file.basename}`);
     return errors;
   }
 

@@ -42,6 +42,16 @@ export class TypeCheckerView extends ItemView {
   }
 
   async updateCurrentFile(file: TFile | null) {
+    console.time(`TypeChecker: updateCurrentFile ${file?.basename || 'null'}`);
+    
+    // If this is the same file, just re-render (no validation needed)
+    if (this.currentFile === file) {
+      console.log(`TypeChecker: Same file, skipping validation`);
+      this.renderResults();
+      console.timeEnd(`TypeChecker: updateCurrentFile ${file?.basename || 'null'}`);
+      return;
+    }
+    
     this.currentFile = file;
     
     // If we have a current file, check it for errors and update the results
@@ -63,6 +73,7 @@ export class TypeCheckerView extends ItemView {
     }
     
     this.renderResults();
+    console.timeEnd(`TypeChecker: updateCurrentFile ${file?.basename || 'null'}`);
   }
 
   private renderCurrentFileTable(
@@ -204,8 +215,17 @@ export class TypeCheckerView extends ItemView {
       errorCell.textContent = result.errors.length.toString();
 
       // Click to open file
-      row.addEventListener("click", () => {
-        this.app.workspace.openLinkText(result.file.path, "");
+      row.addEventListener("click", async () => {
+        console.time(`TypeChecker: Opening ${result.file.basename}`);
+        try {
+          // Use faster direct file opening instead of openLinkText
+          await this.app.workspace.getLeaf().openFile(result.file);
+        } catch (error) {
+          console.error("TypeChecker: Failed to open file", error);
+          // Fallback to original method
+          this.app.workspace.openLinkText(result.file.path, "");
+        }
+        console.timeEnd(`TypeChecker: Opening ${result.file.basename}`);
       });
 
       // Hover effect
