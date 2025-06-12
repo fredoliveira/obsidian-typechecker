@@ -226,7 +226,7 @@ export class TypeCheckerPlugin extends Plugin {
           property,
           expected: expectedType,
           actual: actualType,
-          message: `Property '${property}' should be ${expectedType} but got ${actualType}`,
+          message: `expected ${expectedType}, got ${actualType}`,
         });
       }
     }

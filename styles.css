@@ -1,8 +1,6 @@
 /* Main container */
 .typechecker-content {
-  padding: 6px;
-  height: 100%;
-  overflow-y: auto;
+  padding: 0px;
 }
 
 /* Section headers */
@@ -44,7 +42,7 @@
 }
 
 .typechecker-table-header .typechecker-errors-col {
-  width: 60px;
+  width: 3ch;
   text-align: center;
 }
 

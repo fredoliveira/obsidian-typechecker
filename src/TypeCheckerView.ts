@@ -150,7 +150,7 @@ export class TypeCheckerView extends ItemView {
 
     headerRow.createEl("th", { text: "File" });
     headerRow.createEl("th", {
-      text: "Issues",
+      text: "",
       cls: "typechecker-errors-col",
     });
 
