@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFile, normalizePath, WorkspaceLeaf } from "obsidian";
+import { Plugin, TFile, normalizePath, WorkspaceLeaf } from "obsidian";
 import { TypeCheckerView, TYPE_CHECKER_VIEW_TYPE } from "./TypeCheckerView";
 import { TypeCheckerSettingTab } from "./TypeCheckerSettingsTab";
 
@@ -117,19 +117,10 @@ export class TypeCheckerPlugin extends Plugin {
   async checkCurrentFile() {
     const activeFile = this.app.workspace.getActiveFile();
     if (!activeFile || activeFile.extension !== "md") {
-      new Notice("No markdown file is currently active");
       return;
     }
 
-    const errors = await this.validateFile(activeFile);
-    if (errors.length === 0) {
-      new Notice("✅ No frontmatter type errors found");
-    } else {
-      const errorMessage = `❌ Found ${errors.length} frontmatter error${
-        errors.length > 1 ? "s" : ""
-      }:\n${errors.map((e) => `• ${e.message}`).join("\n")}`;
-      new Notice(errorMessage);
-    }
+    await this.validateFile(activeFile);
   }
 
   async checkAllFiles() {
