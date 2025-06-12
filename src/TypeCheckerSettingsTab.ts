@@ -28,19 +28,6 @@ export class TypeCheckerSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl)
-      .setName("Show inline warnings")
-      .setDesc(
-        "Show warning indicators next to invalid properties (coming soon)"
-      )
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.showInlineWarnings)
-          .onChange(async (value) => {
-            this.plugin.settings.showInlineWarnings = value;
-            await this.plugin.saveSettings();
-          })
-      );
 
     containerEl.createEl("h3", { text: "Property Types" });
 

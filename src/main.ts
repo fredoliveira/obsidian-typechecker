@@ -10,7 +10,6 @@ import type {
 
 const DEFAULT_SETTINGS: TypeCheckerSettings = {
   enableAutoCheck: true,
-  showInlineWarnings: true,
 };
 
 const IGNORED_PROPERTIES = ["position", "aliases", "tags"];

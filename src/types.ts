@@ -1,6 +1,5 @@
 export interface TypeCheckerSettings {
 	enableAutoCheck: boolean;
-	showInlineWarnings: boolean;
 }
 
 export interface PropertyTypes {
