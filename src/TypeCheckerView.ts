@@ -21,7 +21,7 @@ export class TypeCheckerView extends ItemView {
   }
 
   getIcon() {
-    return "shield-check";
+    return "list-check";
   }
 
   async onOpen() {
@@ -138,7 +138,7 @@ export class TypeCheckerView extends ItemView {
     // Vault-wide section header
     contentEl.createEl("div", {
       text: `Vault issues: ${totalErrors} errors in ${this.results.length} files`,
-      cls: "typechecker-vault-header",
+      cls: "typechecker-section-header",
     });
 
     // Table

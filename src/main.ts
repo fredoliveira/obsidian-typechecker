@@ -19,7 +19,10 @@ export class TypeCheckerPlugin extends Plugin {
   settings: TypeCheckerSettings;
   propertyTypes: PropertyTypes;
   private updateTimeout: NodeJS.Timeout | null = null;
-  private validationCache: Map<string, { mtime: number; errors: ValidationError[] }> = new Map();
+  private validationCache: Map<
+    string,
+    { mtime: number; errors: ValidationError[] }
+  > = new Map();
 
   async onload() {
     await this.loadSettings();
@@ -33,7 +36,7 @@ export class TypeCheckerPlugin extends Plugin {
 
     // Add ribbon icon for type checking
     const ribbonIconEl = this.addRibbonIcon(
-      "shield-check",
+      "list-check",
       "Type Checker",
       (evt: MouseEvent) => {
         this.checkCurrentFile();
@@ -178,9 +181,11 @@ export class TypeCheckerPlugin extends Plugin {
     if (this.updateTimeout) {
       clearTimeout(this.updateTimeout);
     }
-    
+
     this.updateTimeout = setTimeout(async () => {
-      const leaf = this.app.workspace.getLeavesOfType(TYPE_CHECKER_VIEW_TYPE)[0];
+      const leaf = this.app.workspace.getLeavesOfType(
+        TYPE_CHECKER_VIEW_TYPE
+      )[0];
       if (leaf?.view instanceof TypeCheckerView) {
         const currentFile = this.app.workspace.getActiveFile();
         await leaf.view.updateCurrentFile(currentFile);
@@ -193,7 +198,7 @@ export class TypeCheckerPlugin extends Plugin {
     // Check cache first
     const cacheKey = file.path;
     const cached = this.validationCache.get(cacheKey);
-    
+
     if (cached && cached.mtime === file.stat.mtime) {
       console.log(`TypeChecker: Using cached validation for ${file.basename}`);
       return cached.errors;
