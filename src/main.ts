@@ -165,7 +165,7 @@ export class TypeCheckerPlugin extends Plugin {
       }
     }
 
-    // "Reveal" the leaf in case it is in a collapsed sidebar
+    // Reveal the leaf in case it is in a collapsed sidebar
     if (leaf) {
       workspace.revealLeaf(leaf);
     }
@@ -211,17 +211,26 @@ export class TypeCheckerPlugin extends Plugin {
     return errors;
   }
 
+  // MARK: Property type validation
   validatePropertyType(value: any, expectedType: string): boolean {
     switch (expectedType) {
       case "text":
         return typeof value === "string";
-      case "multitext":
+      case "list":
+      case "multitext": // Keep backward compatibility
         return (
           typeof value === "string" ||
           (Array.isArray(value) && value.every((v) => typeof v === "string"))
         );
+      case "number":
+        return typeof value === "number" && !isNaN(value);
+      case "checkbox":
+      case "boolean":
+        return typeof value === "boolean";
       case "date":
-        return this.isValidDate(value);
+        return this.isValidDate(value) && !this.hasTimeComponent(value);
+      case "datetime":
+        return this.isValidDate(value) && this.hasTimeComponent(value);
       case "tags":
         return (
           Array.isArray(value) &&
@@ -239,13 +248,17 @@ export class TypeCheckerPlugin extends Plugin {
   getValueType(value: any): string {
     if (value === null || value === undefined) return "null";
     if (typeof value === "string") {
-      if (this.isValidDate(value)) return "date";
+      if (this.isValidDate(value)) {
+        return this.hasTimeComponent(value) ? "datetime" : "date";
+      }
       return "text";
     }
+    if (typeof value === "number" && !isNaN(value)) return "number";
+    if (typeof value === "boolean") return "checkbox";
     if (Array.isArray(value)) {
       if (value.every((v) => typeof v === "string" && v.startsWith("#")))
         return "tags";
-      if (value.every((v) => typeof v === "string")) return "multitext";
+      if (value.every((v) => typeof v === "string")) return "list";
       return "array";
     }
     return typeof value;
@@ -255,11 +268,21 @@ export class TypeCheckerPlugin extends Plugin {
     if (typeof value !== "string") return false;
     // Check for common date formats
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/; // YYYY-MM-DD
-    const datetimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{3})?Z?$/; // ISO datetime
+    const datetimeRegex =
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d{3})?Z?$/; // ISO datetime
     return (
       dateRegex.test(value) ||
       datetimeRegex.test(value) ||
       !isNaN(Date.parse(value))
+    );
+  }
+
+  hasTimeComponent(value: string): boolean {
+    if (typeof value !== "string") return false;
+    // Check if the date string includes time component
+    return (
+      value.includes("T") ||
+      (value.includes(" ") && /\d{1,2}:\d{2}/.test(value))
     );
   }
 }
