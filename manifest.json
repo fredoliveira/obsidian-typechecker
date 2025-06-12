@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-typechecker",
-	"name": "Obsidian Type Checker",
-	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Type Checker for Obsidian frontmatter",
-	"author": "Fred Oliveira",
-	"authorUrl": "https://helloform.com",
-	"isDesktopOnly": false
+  "id": "obsidian-typechecker",
+  "name": "Obsidian Type Checker",
+  "version": "1.0.0",
+  "minAppVersion": "1.9.0",
+  "description": "Type Checker for Obsidian frontmatter",
+  "author": "Fred Oliveira",
+  "authorUrl": "https://helloform.com",
+  "isDesktopOnly": false
 }
