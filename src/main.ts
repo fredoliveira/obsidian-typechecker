@@ -79,9 +79,18 @@ export class TypeCheckerPlugin extends Plugin {
 					if (this.settings.enableAutoCheck) {
 						this.checkCurrentFile();
 					}
+					// Update the view with the new current file
+					this.updateViewCurrentFile();
 				})
 			);
 		}
+
+		// Also update view on file change even if auto-check is disabled
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", () => {
+				this.updateViewCurrentFile();
+			})
+		);
 	}
 
 	onunload() {}
@@ -148,6 +157,8 @@ export class TypeCheckerPlugin extends Plugin {
 		const leaf = this.app.workspace.getLeavesOfType(TYPE_CHECKER_VIEW_TYPE)[0];
 		if (leaf?.view instanceof TypeCheckerView) {
 			leaf.view.updateResults(allResults);
+			// Also ensure current file is set
+			this.updateViewCurrentFile();
 		}
 
 		if (allResults.length === 0) {
@@ -176,6 +187,14 @@ export class TypeCheckerPlugin extends Plugin {
 		// "Reveal" the leaf in case it is in a collapsed sidebar
 		if (leaf) {
 			workspace.revealLeaf(leaf);
+		}
+	}
+
+	updateViewCurrentFile() {
+		const leaf = this.app.workspace.getLeavesOfType(TYPE_CHECKER_VIEW_TYPE)[0];
+		if (leaf?.view instanceof TypeCheckerView) {
+			const currentFile = this.app.workspace.getActiveFile();
+			leaf.view.updateCurrentFile(currentFile);
 		}
 	}
 
