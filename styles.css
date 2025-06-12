@@ -1,6 +1,7 @@
 /* Main container */
 .typechecker-content {
   padding: 0px;
+  height: 100%;
 }
 
 /* Section headers */
@@ -94,24 +95,17 @@
 
 /* Empty state */
 .typechecker-empty-state {
-  text-align: center;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
   color: var(--text-muted);
-  margin-top: 2rem;
+  font-size: var(--font-smaller);
 }
 
-.typechecker-empty-state h3 {
-  margin: 0.5rem 0;
-}
-
-.typechecker-empty-state p {
-  margin: 0.5rem 0;
-}
-
-.typechecker-no-issues {
-  color: var(--text-muted);
-  font-size: var(--font-ui-smallest);
-}
-
+/* Settings */
 .typechecker-settings-header {
   margin-top: 1em;
   font-size: var(--font-ui-small);

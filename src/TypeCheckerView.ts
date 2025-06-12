@@ -75,7 +75,7 @@ export class TypeCheckerView extends ItemView {
   }
 
   // MARK: Rendering: Current file table
-  private renderCurrentFileTable(
+  private renderFileIssueTable(
     contentEl: HTMLElement,
     currentFileErrors: ValidationError[]
   ) {
@@ -129,7 +129,7 @@ export class TypeCheckerView extends ItemView {
   }
 
   // MARK: Rendering: Vault-wide table
-  private renderVaultWideTable(contentEl: HTMLElement) {
+  private renderVaultIssueTable(contentEl: HTMLElement) {
     // Summary
     const totalErrors = this.results.reduce(
       (sum, result) => sum + result.errors.length,
@@ -202,15 +202,11 @@ export class TypeCheckerView extends ItemView {
       cls: "typechecker-content",
     });
 
+    // If there are no issues with the current file or the vault, show an empty state message
     if (this.results.length === 0) {
-      const emptyState = contentEl.createEl("div", {
+      contentEl.createEl("div", {
+        text: "No frontmatter issues found!",
         cls: "typechecker-empty-state",
-      });
-
-      emptyState.createEl("div", { text: "🛡️" });
-      emptyState.createEl("h3", { text: "No type errors found" });
-      emptyState.createEl("p", {
-        text: "All frontmatter types are valid across your vault.",
       });
 
       return;
@@ -226,7 +222,7 @@ export class TypeCheckerView extends ItemView {
     // Always show current file section if there's a current file
     if (this.currentFile && this.currentFile.extension === "md") {
       if (currentFileErrors.length > 0) {
-        this.renderCurrentFileTable(contentEl, currentFileErrors);
+        this.renderFileIssueTable(contentEl, currentFileErrors);
       } else {
         this.renderCurrentFileNoIssues(contentEl);
       }
@@ -234,7 +230,7 @@ export class TypeCheckerView extends ItemView {
 
     // Show vault-wide table if there are any errors
     if (this.results.length > 0) {
-      this.renderVaultWideTable(contentEl);
+      this.renderVaultIssueTable(contentEl);
     }
   }
 }
