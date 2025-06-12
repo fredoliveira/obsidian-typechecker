@@ -36,14 +36,32 @@ export class TypeCheckerView extends ItemView {
     // Nothing to clean up
   }
 
-  updateResults(results: { file: TFile; errors: ValidationError[] }[]) {
+  async updateResults(results: { file: TFile; errors: ValidationError[] }[]) {
     this.results = results;
-    this.currentFile = this.app.workspace.getActiveFile();
-    this.renderResults();
+    await this.updateCurrentFile(this.app.workspace.getActiveFile());
   }
 
-  updateCurrentFile(file: TFile | null) {
+  async updateCurrentFile(file: TFile | null) {
     this.currentFile = file;
+    
+    // If we have a current file, check it for errors and update the results
+    if (file && file.extension === "md") {
+      const errors = await this.plugin.validateFile(file);
+      
+      // Update or add this file's results
+      const existingIndex = this.results.findIndex(result => result.file.path === file.path);
+      if (existingIndex >= 0) {
+        this.results[existingIndex] = { file, errors };
+      } else if (errors.length > 0) {
+        this.results.push({ file, errors });
+      }
+      
+      // Remove this file from results if it no longer has errors
+      if (errors.length === 0 && existingIndex >= 0) {
+        this.results.splice(existingIndex, 1);
+      }
+    }
+    
     this.renderResults();
   }
 

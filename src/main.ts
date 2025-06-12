@@ -70,20 +70,20 @@ export class TypeCheckerPlugin extends Plugin {
     // Auto-check on file change if enabled
     if (this.settings.enableAutoCheck) {
       this.registerEvent(
-        this.app.workspace.on("active-leaf-change", () => {
+        this.app.workspace.on("active-leaf-change", async () => {
           if (this.settings.enableAutoCheck) {
-            this.checkCurrentFile();
+            await this.checkCurrentFile();
           }
           // Update the view with the new current file
-          this.updateViewCurrentFile();
+          await this.updateViewCurrentFile();
         })
       );
     }
 
     // Also update view on file change even if auto-check is disabled
     this.registerEvent(
-      this.app.workspace.on("active-leaf-change", () => {
-        this.updateViewCurrentFile();
+      this.app.workspace.on("active-leaf-change", async () => {
+        await this.updateViewCurrentFile();
       })
     );
   }
@@ -149,13 +149,7 @@ export class TypeCheckerPlugin extends Plugin {
     // Update the view with results
     const leaf = this.app.workspace.getLeavesOfType(TYPE_CHECKER_VIEW_TYPE)[0];
     if (leaf?.view instanceof TypeCheckerView) {
-      leaf.view.updateResults(allResults);
-      // Also ensure current file is set
-      this.updateViewCurrentFile();
-    }
-
-    if (allResults.length === 0) {
-      new Notice("✅ No frontmatter type errors found in any files");
+      await leaf.view.updateResults(allResults);
     }
   }
 
@@ -186,11 +180,11 @@ export class TypeCheckerPlugin extends Plugin {
     }
   }
 
-  updateViewCurrentFile() {
+  async updateViewCurrentFile() {
     const leaf = this.app.workspace.getLeavesOfType(TYPE_CHECKER_VIEW_TYPE)[0];
     if (leaf?.view instanceof TypeCheckerView) {
       const currentFile = this.app.workspace.getActiveFile();
-      leaf.view.updateCurrentFile(currentFile);
+      await leaf.view.updateCurrentFile(currentFile);
     }
   }
 
