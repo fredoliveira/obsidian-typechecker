@@ -27,7 +27,7 @@ export class TypeCheckerView extends ItemView {
   async onOpen() {
     const container = this.containerEl.children[1];
     container.empty();
-    container.createEl("div", { text: "Type Checker", cls: "view-header" });
+
     // Automatically check all files when view opens
     await this.plugin.checkAllFiles();
   }
@@ -42,49 +42,56 @@ export class TypeCheckerView extends ItemView {
   }
 
   async updateCurrentFile(file: TFile | null) {
-    console.time(`TypeChecker: updateCurrentFile ${file?.basename || 'null'}`);
-    
+    console.time(`TypeChecker: updateCurrentFile ${file?.basename || "null"}`);
+
     // If this is the same file, just re-render (no validation needed)
     if (this.currentFile === file) {
       console.log(`TypeChecker: Same file, skipping validation`);
       this.renderResults();
-      console.timeEnd(`TypeChecker: updateCurrentFile ${file?.basename || 'null'}`);
+      console.timeEnd(
+        `TypeChecker: updateCurrentFile ${file?.basename || "null"}`
+      );
       return;
     }
-    
+
     this.currentFile = file;
-    
+
     // If we have a current file, check it for errors and update the results
     if (file && file.extension === "md") {
       const errors = await this.plugin.validateFile(file);
-      
+
       // Update or add this file's results
-      const existingIndex = this.results.findIndex(result => result.file.path === file.path);
+      const existingIndex = this.results.findIndex(
+        (result) => result.file.path === file.path
+      );
       if (existingIndex >= 0) {
         this.results[existingIndex] = { file, errors };
       } else if (errors.length > 0) {
         this.results.push({ file, errors });
       }
-      
+
       // Remove this file from results if it no longer has errors
       if (errors.length === 0 && existingIndex >= 0) {
         this.results.splice(existingIndex, 1);
       }
     }
-    
+
     this.renderResults();
-    console.timeEnd(`TypeChecker: updateCurrentFile ${file?.basename || 'null'}`);
+    console.timeEnd(
+      `TypeChecker: updateCurrentFile ${file?.basename || "null"}`
+    );
   }
 
+  // MARK: Rendering: Current file table
   private renderCurrentFileTable(
     contentEl: HTMLElement,
     currentFileErrors: ValidationError[]
   ) {
     // Current file section header
-    const currentFileHeader = contentEl.createEl("h3");
+    const currentFileHeader = contentEl.createEl("div");
     currentFileHeader.style.marginBottom = "12px";
     currentFileHeader.style.fontSize = "var(--font-ui-small)";
-    currentFileHeader.style.fontWeight = "600";
+    currentFileHeader.style.fontWeight = "400";
     currentFileHeader.style.color = "var(--text-muted)";
     currentFileHeader.textContent = `Current file:`;
 
@@ -141,6 +148,7 @@ export class TypeCheckerView extends ItemView {
     });
   }
 
+  // MARK: Rendering: Vault-wide table
   private renderVaultWideTable(contentEl: HTMLElement) {
     // Summary
     const totalErrors = this.results.reduce(
@@ -149,10 +157,10 @@ export class TypeCheckerView extends ItemView {
     );
 
     // Vault-wide section header
-    const vaultHeader = contentEl.createEl("h3");
+    const vaultHeader = contentEl.createEl("div");
     vaultHeader.style.marginBottom = "8px";
     vaultHeader.style.fontSize = "var(--font-ui-small)";
-    vaultHeader.style.fontWeight = "600";
+    vaultHeader.style.fontWeight = "400";
     vaultHeader.style.color = "var(--text-muted)";
     vaultHeader.textContent = `Vault issues: ${totalErrors} errors in ${this.results.length} files`;
 
