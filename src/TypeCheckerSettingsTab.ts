@@ -36,7 +36,7 @@ export class TypeCheckerSettingTab extends PluginSettingTab {
     const description = containerEl.createEl("p");
     description.addClass("setting-item-description");
     description.setText("Property types are configured in ");
-    description.createEl("code", { text: ".obsidian/types.json" });
+    description.createEl("code", { text: `${this.app.vault.configDir}/types.json` });
     description.appendText(
       ". The plugin will validate frontmatter properties against these type definitions. Built-in Obsidian properties (aliases, tags) are handled internally and not validated by this plugin."
     );
@@ -98,7 +98,7 @@ export class TypeCheckerSettingTab extends PluginSettingTab {
       );
     } else {
       containerEl.createEl("p", {
-        text: "No property types found. Create .obsidian/types.json to define property types.",
+        text: `No property types found. Create ${this.app.vault.configDir}/types.json to define property types.`,
         cls: "setting-item-description",
       });
     }
