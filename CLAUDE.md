@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an Obsidian plugin called "Obsidian Property Type Checker" that provides frontmatter property type validation for Obsidian. The plugin validates frontmatter properties against user-defined type schemas and displays validation results in a dedicated sidebar view. Built using TypeScript following standard Obsidian plugin architecture.
+This is an Obsidian plugin called "Property Checker" that provides frontmatter property type validation for Obsidian. The plugin validates frontmatter properties against user-defined type schemas and displays validation results in a dedicated sidebar view. Built using TypeScript following standard Obsidian plugin architecture.
 
 ## Development Commands
 
@@ -43,6 +43,7 @@ The main plugin class extends Obsidian's `Plugin` base class and follows the sta
 The plugin validates frontmatter properties against types defined in `.obsidian/types.json`:
 
 ### Supported Property Types
+
 - `text` - Single line text strings
 - `list`/`multitext` - Arrays of strings (backward compatibility)
 - `number` - Numeric values
@@ -53,11 +54,13 @@ The plugin validates frontmatter properties against types defined in `.obsidian/
 - `aliases` - Arrays of strings
 
 ### Event Handling
+
 - **File switching**: `active-leaf-change` event updates the view for new files
 - **File saving**: `metadataCache.on('changed')` event triggers validation when metadata updates
 - **Auto-checking**: Controlled by `enableAutoCheck` setting
 
 ### Performance Optimizations
+
 - **Validation caching**: Results cached by file path and mtime
 - **Smart cache invalidation**: Cache cleared on metadata changes
 - **Debounced updates**: 100ms debounce on file switching to prevent excessive validation

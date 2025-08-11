@@ -1,9 +1,9 @@
 {
   "id": "property-typechecker",
-  "name": "Property Type Checker",
-  "version": "0.9.3",
+  "name": "Property Checker",
+  "version": "0.9.4",
   "minAppVersion": "1.9.0",
-  "description": "Property type checker makes sure your frontmatter properties are of the correct type. It adds a sidebar view that lists issues in your open files as well as the rest of the vault.",
+  "description": "Property checker makes sure your frontmatter properties are of the correct type. It adds a sidebar view that lists issues in your open files as well as the rest of the vault.",
   "author": "Fred Oliveira",
   "authorUrl": "https://helloform.com",
   "isDesktopOnly": true

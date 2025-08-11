@@ -17,7 +17,7 @@ const IGNORED_PROPERTIES = ["position", "aliases", "tags"];
 export class TypeCheckerPlugin extends Plugin {
   settings: TypeCheckerSettings;
   propertyTypes: PropertyTypes;
-  private updateTimeout: NodeJS.Timeout | null = null;
+  private updateTimeout: number | null = null;
   private validationCache: Map<
     string,
     { mtime: number; errors: ValidationError[] }
@@ -45,19 +45,9 @@ export class TypeCheckerPlugin extends Plugin {
     // Add settings tab
     this.addSettingTab(new TypeCheckerSettingTab(this.app, this));
 
-    // Auto-check on file change if enabled
-    if (this.settings.enableAutoCheck) {
-      this.registerEvent(
-        this.app.workspace.on("active-leaf-change", async () => {
-          // Update the view with the new current file
-          await this.updateViewCurrentFile();
-        })
-      );
-    }
-
-    // Also update view on file change even if auto-check is disabled
+    // Update view on file change
     this.registerEvent(
-      this.app.workspace.on("active-leaf-change", async () => {
+      this.app.workspace.on("file-open", async () => {
         await this.updateViewCurrentFile();
       })
     );
@@ -154,7 +144,7 @@ export class TypeCheckerPlugin extends Plugin {
   async updateViewCurrentFile(forceValidation = false) {
     // Debounce rapid file changes to prevent excessive validation (but not for forced updates)
     if (this.updateTimeout && !forceValidation) {
-      clearTimeout(this.updateTimeout);
+      window.clearTimeout(this.updateTimeout);
     }
 
     const updateFn = async () => {
@@ -172,7 +162,7 @@ export class TypeCheckerPlugin extends Plugin {
       // Don't debounce forced updates (like file saves)
       await updateFn();
     } else {
-      this.updateTimeout = setTimeout(updateFn, 100); // 100ms debounce
+      this.updateTimeout = window.setTimeout(updateFn, 100); // 100ms debounce
     }
   }
 
@@ -245,8 +235,7 @@ export class TypeCheckerPlugin extends Plugin {
         return this.isValidDate(value) && this.hasTimeComponent(value);
       case "tags":
         return (
-          Array.isArray(value) &&
-          value.every((v) => typeof v === "string" && v.startsWith("#"))
+          Array.isArray(value) && value.every((v) => typeof v === "string")
         );
       case "aliases":
         return (
@@ -268,9 +257,7 @@ export class TypeCheckerPlugin extends Plugin {
     if (typeof value === "number" && !isNaN(value)) return "number";
     if (typeof value === "boolean") return "checkbox";
     if (Array.isArray(value)) {
-      if (value.every((v) => typeof v === "string" && v.startsWith("#")))
-        return "tags";
-      if (value.every((v) => typeof v === "string")) return "list";
+      if (value.every((v) => typeof v === "string")) return "tags";
       return "array";
     }
     return typeof value;

@@ -115,7 +115,7 @@
   line-height: 1em;
 }
 
-.setting-item-description {
+.typechecker-settings-description {
   font-size: var(--font-ui-small);
   font-weight: 400;
   color: var(--text-muted);

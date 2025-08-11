@@ -1,4 +1,4 @@
-# Obsidian Property Type Checker
+# Property Checker
 
 A plugin for Obsidian that validates frontmatter property types against your defined property schema. Help ensure data consistency across your vault by catching type mismatches in frontmatter properties.
 
@@ -73,7 +73,7 @@ Enable auto-checking in the plugin settings to automatically validate frontmatte
 
 ### Settings
 
-Access plugin settings through Settings → Community Plugins → Property Type Checker to:
+Access plugin settings through Settings → Community Plugins → Property Checker to:
 
 - Toggle auto-checking on file changes
 - View your current property type definitions
